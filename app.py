@@ -2,41 +2,53 @@ from flask import Flask, render_template, request, redirect, url_for
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import os
+import certifi
+import ssl
 
 app = Flask(__name__)
 
-# MongoDB connection using environment variable (more secure)
+# Read MONGO_URI from environment
 MONGO_URI = os.environ.get('MONGO_URI')
 
-# Fallback for local testing only - REPLACE WITH YOUR ACTUAL URI
-if not MONGO_URI:
-    # Make sure to URL-encode special characters in password
-    # @ becomes %40 in the password
-    MONGO_URI = "mongodb+srv://stella:Jaden%402012@cluster0.ny8p5lz.mongodb.net/movie_db?retryWrites=true&w=majority"
-
 def get_db():
+    if not MONGO_URI:
+        print("ERROR: MONGO_URI not set")
+        return None
+    
     try:
-        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        # Create SSL context with certifi certificates
+        ssl_context = ssl.create_default_context(cafile=certifi.where())
+        
+        # Connect with SSL settings
+        client = MongoClient(
+            MONGO_URI,
+            serverSelectionTimeoutMS=10000,
+            tls=True,
+            tlsCAFile=certifi.where(),
+            tlsAllowInvalidCertificates=False
+        )
+        
+        # Test connection
         client.admin.command('ping')
+        print("MongoDB connected successfully!")
         return client["movie_db"]
+        
     except Exception as e:
-        print(f"MongoDB Connection Error: {e}")
+        print(f"MongoDB Error: {e}")
         return None
 
 @app.route('/')
 def index():
     db = get_db()
     if db is None:
-        # Return template with empty movies list if DB fails
-        return render_template('index.html', movies=[])
+        return "Database connection failed", 500
     
     try:
         collection = db["movies"]
         movies = list(collection.find())
         return render_template('index.html', movies=movies)
     except Exception as e:
-        print(f"Error fetching movies: {e}")
-        return render_template('index.html', movies=[])
+        return f"Error: {e}", 500
 
 @app.route('/add', methods=['POST'])
 def add_movie():
@@ -77,4 +89,4 @@ def delete_movie(movie_id):
         return f"Error deleting movie: {e}", 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)), debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
