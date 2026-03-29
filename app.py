@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 app = Flask(__name__)
 
 # Connect to MongoDB - CHANGED to movie_db
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient("mongodb+srv://stella:Jaden%402012@cluster0.ny8p5lz.mongodb.net/movie_db")
 db = client['movie_db']           # Changed from 'movie_database' to 'movie_db'
 collection = db['movies']
 
@@ -36,5 +36,10 @@ def delete_movie(movie_id):
     collection.delete_one({'_id': ObjectId(movie_id)})
     return redirect(url_for('index'))
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+import os
+from pymongo import MongoClient
+
+client = MongoClient("mongodb+srv://stella:Jaden%402012@cluster0.ny8p5lz.mongodb.net/movie_db")
+
+db = client["movie_db"]
+collection = db["movies"]
