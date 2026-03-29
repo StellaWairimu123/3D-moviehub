@@ -5,33 +5,51 @@ import os
 
 app = Flask(__name__)
 
-# MongoDB connection (safe)
-try:
-    client = MongoClient("mongodb+srv://stella:Jaden%402012@cluster0.ny8p5lz.mongodb.net/movie_db")
-    db = client["movie_db"]
-    collection = db["movies"]
-except Exception as e:
-    collection = None
-    print("MongoDB Error:", e)
+# MongoDB connection using environment variable (more secure)
+MONGO_URI = os.environ.get('MONGO_URI')
 
-# Home route
+# Fallback for local testing only - REPLACE WITH YOUR ACTUAL URI
+if not MONGO_URI:
+    # Make sure to URL-encode special characters in password
+    # @ becomes %40 in the password
+    MONGO_URI = "mongodb+srv://stella:Jaden%402012@cluster0.ny8p5lz.mongodb.net/movie_db?retryWrites=true&w=majority"
+
+def get_db():
+    try:
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        client.admin.command('ping')
+        return client["movie_db"]
+    except Exception as e:
+        print(f"MongoDB Connection Error: {e}")
+        return None
+
 @app.route('/')
 def index():
+    db = get_db()
+    if db is None:
+        # Return template with empty movies list if DB fails
+        return render_template('index.html', movies=[])
+    
     try:
-        if collection is None:
-            return "Database connection failed"
-
+        collection = db["movies"]
         movies = list(collection.find())
         return render_template('index.html', movies=movies)
     except Exception as e:
-        return f"Error loading page: {e}"
+        print(f"Error fetching movies: {e}")
+        return render_template('index.html', movies=[])
 
-# Add movie
 @app.route('/add', methods=['POST'])
 def add_movie():
+    db = get_db()
+    if db is None:
+        return "Database connection failed", 500
+    
     try:
+        collection = db["movies"]
         movie = {
             'title': request.form.get('title', ''),
+            'director': request.form.get('director', ''),
+            'year': int(request.form.get('year', 0) or 0),
             'genre': request.form.get('genre', ''),
             'rating': float(request.form.get('rating', 0) or 0),
             'duration': int(request.form.get('duration', 0) or 0),
@@ -43,17 +61,20 @@ def add_movie():
         collection.insert_one(movie)
         return redirect(url_for('index'))
     except Exception as e:
-        return f"Error adding movie: {e}"
+        return f"Error adding movie: {e}", 500
 
-# Delete movie
 @app.route('/delete/<movie_id>')
 def delete_movie(movie_id):
+    db = get_db()
+    if db is None:
+        return "Database connection failed", 500
+    
     try:
+        collection = db["movies"]
         collection.delete_one({'_id': ObjectId(movie_id)})
         return redirect(url_for('index'))
     except Exception as e:
-        return f"Error deleting movie: {e}"
+        return f"Error deleting movie: {e}", 500
 
-# Run app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)), debug=True)
