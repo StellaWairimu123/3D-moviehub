@@ -12,8 +12,11 @@ collection = db["movies"]
 # Home route
 @app.route('/')
 def index():
-    movies = list(collection.find())
-    return render_template('index.html', movies=movies)
+    try:
+        movies = list(collection.find())
+        return render_template('index.html', movies=movies)
+    except Exception as e:
+        return f"Error: {e}"
 
 # Add movie
 @app.route('/add', methods=['POST'])
