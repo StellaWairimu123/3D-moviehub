@@ -1,1 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D MovieHub - Movie Database</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { font-family: 'Outfit', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --neon-purple: #b026ff;
+            --neon-blue: #00d4ff;
+            --neon-pink: #ff006e;
+            --dark-bg: #0a0a0f;
+            --card-bg: #12121a;
+        }
 
+        body {
+            background: var(--dark-bg);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(176, 38, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%);
+        }
+
+        .glass {
+            background: rgba(18, 18, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            padding: 1rem 2rem;
+        }
+
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .neon-text {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-primary:hover { transform: scale(1.05); }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(18, 18, 26, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label { color: #9ca3af; font-size: 0.875rem; margin-top: 0.25rem; }
+
+        .search-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .genre-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .genre-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .genre-btn.active, .genre-btn:hover {
+            background: rgba(147, 51, 234, 0.3);
+            border-color: rgba(147, 51, 234, 0.5);
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .movie-card {
+            background: rgba(18, 18, 26, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(176, 38, 255, 0.2);
+        }
+
+        .movie-poster {
+            aspect-ratio: 2/3;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .movie-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .movie-poster-placeholder {
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4b5563;
+            font-size: 3rem;
+        }
+
+        .genre-tag {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(147, 51, 234, 0.8);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .watched-badge {
+            position: absolute;
+            top: 0.75rem;
+            left: 0.75rem;
+            width: 24px; height: 24px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .movie-info { padding: 1rem; }
+
+        .movie-title {
+            font-weight: 700;
+            font-size: 1.125rem;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .movie-meta {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .movie-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #fbbf24;
+        }
+
+        .delete-btn {
+            color: #ef4444;
+            text-decoration: none;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            transition: background 0.2s;
+        }
+
+        .delete-btn:hover { background: rgba(239, 68, 68, 0.2); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: rgba(18, 18, 26, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group { margin-bottom: 1rem; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #d1d5db;
+            font-size: 0.875rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--neon-purple);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #9ca3af;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+
+    <!-- Navigation -->
+    <nav class="glass">
+        <div class="nav-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-film"></i>
+                </div>
+                <h1 class="neon-text">3D MovieHub</h1>
+            </div>
+            <button onclick="openModal()" class="btn-primary">
+                <i class="fas fa-plus"></i>
+                Add Movie
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">{{ movies|length }}</div>
+                <div class="stat-label">Total Movies</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">
+                    {% if movies %}
+                        {{ (movies|sum(attribute='rating') / movies|length)|round(1) }}
+                    {% else %}
+                        0.0
+                    {% endif %}
+                </div>
+                <div class="stat-label">Avg Rating</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ movies|map(attribute='genre')|unique|list|length }}</div>
+                <div class="stat-label">Genres</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ movies|selectattr('year', 'equalto', 2026)|list|length }}</div>
+                <div class="stat-label">This Year</div>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="search-bar">
+            <div style="position: relative; flex: 1;">
+                <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #9ca3af;"></i>
+                <input type="text" class="search-input" placeholder="Search movies by title, director, or genre..." onkeyup="filterMovies(this.value)">
+            </div>
+            <div class="genre-filters">
+                <button class="genre-btn active" onclick="filterByGenre('all')">All</button>
+                <button class="genre-btn" onclick="filterByGenre('Action')">Action</button>
+                <button class="genre-btn" onclick="filterByGenre('Drama')">Drama</button>
+                <button class="genre-btn" onclick="filterByGenre('Comedy')">Comedy</button>
+                <button class="genre-btn" onclick="filterByGenre('Sci-Fi')">Sci-Fi</button>
+                <button class="genre-btn" onclick="filterByGenre('Horror')">Horror</button>
+            </div>
+        </div>
+
+        <!-- Movies Grid -->
+        {% if movies %}
+        <div class="movies-grid" id="moviesGrid">
+            {% for movie in movies %}
+            <div class="movie-card" data-genre="{{ movie.genre }}" data-title="{{ movie.title.lower() }}" data-director="{{ movie.director.lower() }}">
+                <div class="movie-poster">
+                    {% if movie.poster %}
+                    <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="movie-poster-placeholder" style="display: none;">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    {% else %}
+                    <div class="movie-poster-placeholder">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    {% endif %}
+                    <span class="genre-tag">{{ movie.genre }}</span>
+                    {% if movie.watched == 'true' or movie.watched == true %}
+                    <div class="watched-badge">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="movie-info">
+                    <h3 class="movie-title">{{ movie.title }}</h3>
+                    <p class="movie-meta">{{ movie.director }} • {{ movie.year }}</p>
+                    <div class="movie-footer">
+                        <div class="rating">
+                            <i class="fas fa-star"></i>
+                            <span>{{ movie.rating }}</span>
+                        </div>
+                        <a href="/delete/{{ movie._id }}" class="delete-btn" onclick="return confirm('Delete this movie?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-film"></i>
+            <h3>No movies found</h3>
+            <p>Start by adding your first movie!</p>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Add Movie Modal -->
+    <div id="movieModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="neon-text" style="font-size: 1.5rem;">Add New Movie</h2>
+                <button class="close-btn" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form action="/add" method="POST">
+                <div class="form-group">
+                    <label>Movie Title *</label>
+                    <input type="text" name="title" required placeholder="Enter movie title">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Director *</label>
+                        <input type="text" name="director" required placeholder="Director name">
+                    </div>
+                    <div class="form-group">
+                        <label>Release Year *</label>
+                        <input type="number" name="year" required min="1900" max="2030" placeholder="2024">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Genre *</label>
+                        <select name="genre" required>
+                            <option value="">Select Genre</option>
+                            <option value="Action">Action</option>
+                            <option value="Adventure">Adventure</option>
+                            <option value="Animation">Animation</option>
+                            <option value="Comedy">Comedy</option>
+                            <option value="Crime">Crime</option>
+                            <option value="Documentary">Documentary</option>
+                            <option value="Drama">Drama</option>
+                            <option value="Fantasy">Fantasy</option>
+                            <option value="Horror">Horror</option>
+                            <option value="Mystery">Mystery</option>
+                            <option value="Romance">Romance</option>
+                            <option value="Sci-Fi">Sci-Fi</option>
+                            <option value="Thriller">Thriller</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Rating (0-10)</label>
+                        <input type="number" name="rating" step="0.1" min="0" max="10" placeholder="8.5">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Duration (minutes)</label>
+                        <input type="number" name="duration" min="1" placeholder="120">
+                    </div>
+                    <div class="form-group">
+                        <label>Poster URL</label>
+                        <input type="url" name="poster" placeholder="https://example.com/poster.jpg">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Cast (comma separated)</label>
+                    <input type="text" name="cast" placeholder="Actor 1, Actor 2, Actor 3...">
+                </div>
+                <div class="form-group">
+                    <label>Synopsis</label>
+                    <textarea name="synopsis" rows="3" placeholder="Brief plot summary..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Watched Status</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="watched" value="true">
+                            <span>Watched</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="watched" value="false" checked>
+                            <span>Watchlist</span>
+                        </label>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" onclick="closeModal()" style="flex: 1; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid rgba(255,255,255,0.2); background: transparent; color: white; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary" style="flex: 1; justify-content: center;">
+                        <i class="fas fa-save"></i>
+                        Save Movie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('movieModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('movieModal').classList.remove('active');
+        }
+
+        function filterMovies(query) {
+            query = query.toLowerCase();
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach(card => {
+                const title = card.dataset.title;
+                const director = card.dataset.director;
+                const genre = card.dataset.genre.toLowerCase();
+                if (title.includes(query) || director.includes(query) || genre.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function filterByGenre(genre) {
+            // Update active button
+            document.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === genre || (genre === 'all' && btn.textContent === 'All')) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Filter cards
+            const cards = document.querySelectorAll('.movie-card');
+            cards.forEach(card => {
+                if (genre === 'all' || card.dataset.genre === genre) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Close modal on outside click
+        document.getElementById('movieModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+    </script>
+</body>
+</html>
